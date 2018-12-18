@@ -1,5 +1,6 @@
 import { DynamoDB } from "aws-sdk";
 import SearchGenerator from "./search-generator.class";
-export default class QueryGenerator extends SearchGenerator<DynamoDB.DocumentClient.ScanInput> {
-    protected asyncSearch(input: DynamoDB.DocumentClient.ScanInput): Promise<DynamoDB.DocumentClient.ScanOutput>;
+import DocumentClient = DynamoDB.DocumentClient;
+export default class QueryGenerator extends SearchGenerator<DocumentClient.ScanInput> {
+    protected asyncSearch(input: DocumentClient.ScanInput): Promise<DocumentClient.ScanOutput>;
 }

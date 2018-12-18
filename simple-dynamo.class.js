@@ -34,6 +34,9 @@ class SimpleDynamo {
     update(input) {
         return new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output)));
     }
+    transactWrite(input) {
+        return new Promise((rs, rj) => this.documentClient.transactWrite(input, (err, output) => err ? rj(err) : rs(output)));
+    }
 }
 exports.default = SimpleDynamo;
 function uniqueKeys(arrArg) {

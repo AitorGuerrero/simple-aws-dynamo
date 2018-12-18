@@ -1,19 +1,20 @@
 import { DynamoDB } from "aws-sdk";
+import DocumentClient = DynamoDB.DocumentClient;
 interface IInput {
-    ExclusiveStartKey?: DynamoDB.DocumentClient.Key;
+    ExclusiveStartKey?: DocumentClient.Key;
 }
 interface IOutput {
-    Items?: DynamoDB.DocumentClient.AttributeMap[];
-    LastEvaluatedKey?: DynamoDB.DocumentClient.Key;
+    Items?: DocumentClient.AttributeMap[];
+    LastEvaluatedKey?: DocumentClient.Key;
     Count?: number;
 }
 export default abstract class SearchGenerator<Input> {
-    protected documentClient: DynamoDB.DocumentClient;
+    protected documentClient: DocumentClient;
     protected input: Input & IInput;
     private batch;
     private sourceIsEmpty;
     private lastEvaluatedKey;
-    constructor(documentClient: DynamoDB.DocumentClient, input: Input & IInput);
+    constructor(documentClient: DocumentClient, input: Input & IInput);
     next(): Promise<DynamoDB.DocumentClient.AttributeMap>;
     count(): Promise<number>;
     protected abstract asyncSearch(input: Input): Promise<IOutput>;
