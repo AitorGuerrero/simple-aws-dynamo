@@ -1,0 +1,33 @@
+{
+  "name": "powered-dynamo",
+  "version": "0.0.0",
+  "description": "Simple dynamo interface",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AitorGuerrero/simple-aws-dynamo.git"
+  },
+  "keywords": [
+    "aws",
+    "dynamo",
+    "dynamodb"
+  ],
+  "author": "Aitor Guerrero",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AitorGuerrero/simple-aws-dynamo/issues"
+  },
+  "homepage": "https://github.com/AitorGuerrero/simple-aws-dynamo#readme",
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.5",
+    "aws-sdk": "^2.378.0",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.2.2"
+  }
+}
