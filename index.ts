@@ -1,3 +1,9 @@
-export * from "./src/query-generator.class";
-export * from "./src/scan-generator.class";
-export * from "./src/simple-dynamo.class";
+import QueryGenerator from "./query-generator.class";
+import ScanGenerator from "./scan-generator.class";
+import SimpleDynamo from "./simple-dynamo.class";
+
+export {
+	SimpleDynamo,
+	ScanGenerator,
+	QueryGenerator,
+}
