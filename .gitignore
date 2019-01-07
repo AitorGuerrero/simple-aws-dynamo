@@ -3,3 +3,7 @@
 
 #DEPENDENCIES
 node_modules
+
+#GENERATED
+*.js
+*.d.ts
