@@ -3,9 +3,9 @@ import QuerySearchGenerator from "./query-generator.class";
 import ScanSearchGenerator from "./scan-generator.class";
 
 import DocumentClient = DynamoDB.DocumentClient;
-import ISimpleDynamo from "./simple-dynamo.interface";
+import IPoweredDynamo from "./powered-dynamo.interface";
 
-export default class SimpleDynamo implements ISimpleDynamo {
+export default class PoweredDynamo implements IPoweredDynamo {
 
 	constructor(
 		private documentClient: DocumentClient,

@@ -3,7 +3,7 @@ import IGenerator from "./generator.interface";
 
 import DocumentClient = DynamoDB.DocumentClient;
 
-export default interface ISimpleDynamo {
+export default interface IPoweredDynamo {
 	get(input: DocumentClient.GetItemInput): Promise<DocumentClient.AttributeMap>;
 	getList(tableName: string, keys: DocumentClient.Key[]): Promise<Map<DocumentClient.Key, DocumentClient.AttributeMap>>;
 	scan(input: DocumentClient.ScanInput): IGenerator;
