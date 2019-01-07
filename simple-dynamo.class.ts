@@ -3,8 +3,9 @@ import QuerySearchGenerator from "./query-generator.class";
 import ScanSearchGenerator from "./scan-generator.class";
 
 import DocumentClient = DynamoDB.DocumentClient;
+import ISimpleDynamo from "./simple-dynamo.interface";
 
-export default class SimpleDynamo {
+export default class SimpleDynamo implements ISimpleDynamo {
 
 	constructor(
 		private documentClient: DocumentClient,
@@ -41,16 +42,16 @@ export default class SimpleDynamo {
 		return new QuerySearchGenerator(this.documentClient, input);
 	}
 
-	public put(input: DocumentClient.PutItemInput) {
-		return new Promise((rs, rj) => this.documentClient.put(input, (err, output) => err ? rj(err) : rs(output)));
+	public async put(input: DocumentClient.PutItemInput) {
+		await new Promise((rs, rj) => this.documentClient.put(input, (err, output) => err ? rj(err) : rs(output)));
 	}
 
-	public update(input: DocumentClient.UpdateItemInput) {
-		return new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output)));
+	public async update(input: DocumentClient.UpdateItemInput) {
+		await new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output)));
 	}
 
-	public transactWrite(input: DocumentClient.TransactWriteItemsInput) {
-		return new Promise((rs, rj) => this.documentClient.transactWrite(input, (err, output) => err ? rj(err) : rs(output)));
+	public async transactWrite(input: DocumentClient.TransactWriteItemsInput) {
+		await new Promise((rs, rj) => this.documentClient.transactWrite(input, (err, output) => err ? rj(err) : rs(output)));
 	}
 }
 

@@ -1,4 +1,5 @@
 import {DynamoDB} from "aws-sdk";
+import IGenerator from "./generator.interface";
 
 import DocumentClient = DynamoDB.DocumentClient;
 
@@ -12,7 +13,7 @@ interface IOutput {
 	Count?: number;
 }
 
-export default abstract class SearchGenerator<Input> {
+export default abstract class SearchGenerator<Input> implements IGenerator {
 
 	private batch: DocumentClient.AttributeMap[] = [];
 	private sourceIsEmpty = false;
@@ -51,6 +52,16 @@ export default abstract class SearchGenerator<Input> {
 		} while (response.LastEvaluatedKey);
 
 		return total;
+	}
+
+	public async toArray() {
+		let e: DocumentClient.AttributeMap;
+		const result: DocumentClient.AttributeMap[] = [];
+		while (e = await this.next()) {
+			result.push(e);
+		}
+
+		return result;
 	}
 
 	protected abstract asyncSearch(input: Input): Promise<IOutput>;

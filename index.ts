@@ -6,4 +6,4 @@ export {
 	SimpleDynamo,
 	ScanGenerator,
 	QueryGenerator,
-}
+};
