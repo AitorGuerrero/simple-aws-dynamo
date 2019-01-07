@@ -4,6 +4,7 @@
     "indent": [
       true,
       "tabs"
-    ]
+    ],
+    "no-conditional-assignment": false
   }
 }
