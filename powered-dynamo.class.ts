@@ -5,7 +5,31 @@ import ScanSearchGenerator from "./scan-generator.class";
 import DocumentClient = DynamoDB.DocumentClient;
 import IPoweredDynamo from "./powered-dynamo.interface";
 
+const maxBatchWriteElems = 10;
+
 export default class PoweredDynamo implements IPoweredDynamo {
+
+	private static splitBatchWriteRequestsInChunks(request: DocumentClient.BatchWriteItemInput) {
+		const requests: Array<{tableName: string, request: DocumentClient.WriteRequest}> = [];
+		const batches: DocumentClient.BatchWriteItemRequestMap[] = [];
+		for (const tableName of Object.keys(request.RequestItems)) {
+			for (const itemRequest of request.RequestItems[tableName]) {
+				requests.push({tableName, request: itemRequest});
+			}
+		}
+		for (let i = 0; i < requests.length; i += maxBatchWriteElems) {
+			const batchRequestMap: DocumentClient.BatchWriteItemRequestMap = {};
+			for (const itemRequest of requests.slice(i, i + maxBatchWriteElems)) {
+				batchRequestMap[itemRequest.tableName] = [].concat(
+					batchRequestMap[itemRequest.tableName] || [],
+					itemRequest.request,
+				);
+			}
+			batches.push(batchRequestMap);
+		}
+
+		return batches;
+	}
 
 	constructor(
 		private documentClient: DocumentClient,
@@ -48,6 +72,15 @@ export default class PoweredDynamo implements IPoweredDynamo {
 
 	public async update(input: DocumentClient.UpdateItemInput) {
 		await new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output)));
+	}
+
+	public async batchWrite(request: DocumentClient.BatchWriteItemInput) {
+		for (const batch of PoweredDynamo.splitBatchWriteRequestsInChunks(request)) {
+			await new Promise((rs, rj) => this.documentClient.batchWrite(
+				Object.assign(request, {RequestItems: batch}),
+				(err, output) => err ? rj(err) : rs(output)),
+			);
+		}
 	}
 
 	public async transactWrite(input: DocumentClient.TransactWriteItemsInput) {
