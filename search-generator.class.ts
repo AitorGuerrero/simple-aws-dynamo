@@ -70,7 +70,10 @@ export default abstract class SearchGenerator<Input> implements IGenerator {
 		if (this.sourceIsEmpty) {
 			return;
 		}
-		const blockInput = Object.assign(this.input, {ExclusiveStartKey: this.lastEvaluatedKey});
+		const blockInput = Object.assign({});
+		if (this.lastEvaluatedKey) {
+			blockInput.ExclusiveStartKey = this.lastEvaluatedKey;
+		}
 		const response = await this.asyncSearch(blockInput);
 		this.lastEvaluatedKey = response.LastEvaluatedKey;
 		if (undefined === this.lastEvaluatedKey) {
