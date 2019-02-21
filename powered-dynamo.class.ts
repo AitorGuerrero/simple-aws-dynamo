@@ -66,12 +66,16 @@ export default class PoweredDynamo implements IPoweredDynamo {
 		return new QuerySearchGenerator(this.documentClient, input);
 	}
 
-	public async put(input: DocumentClient.PutItemInput) {
-		await new Promise((rs, rj) => this.documentClient.put(input, (err, output) => err ? rj(err) : rs(output)));
+	public put(input: DocumentClient.PutItemInput) {
+		return new Promise((rs, rj) => this.documentClient.put(input, (err, output) => err ? rj(err) : rs(output)));
 	}
 
-	public async update(input: DocumentClient.UpdateItemInput) {
-		await new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output)));
+	public update(input: DocumentClient.UpdateItemInput) {
+		return new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output)));
+	}
+
+	public delete(input: DocumentClient.DeleteItemInput) {
+		return new Promise((rs, rj) => this.documentClient.delete(input, (err, output) => err ? rj(err) : rs(output)));
 	}
 
 	public async batchWrite(request: DocumentClient.BatchWriteItemInput) {

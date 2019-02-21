@@ -8,7 +8,8 @@ export default interface IPoweredDynamo {
 	getList(tableName: string, keys: DocumentClient.Key[]): Promise<Map<DocumentClient.Key, DocumentClient.AttributeMap>>;
 	scan(input: DocumentClient.ScanInput): IGenerator;
 	query(input: DocumentClient.QueryInput): IGenerator;
-	put(input: DocumentClient.PutItemInput): Promise<void>;
-	update(input: DocumentClient.UpdateItemInput): Promise<void>;
+	put(input: DocumentClient.PutItemInput): Promise<DocumentClient.PutItemOutput>;
+	update(input: DocumentClient.UpdateItemInput): Promise<DocumentClient.UpdateItemOutput>;
+	delete(input: DocumentClient.DeleteItemInput): Promise<DocumentClient.DeleteItemOutput>;
 	transactWrite(input: DocumentClient.TransactWriteItemsInput): Promise<void>;
 }
