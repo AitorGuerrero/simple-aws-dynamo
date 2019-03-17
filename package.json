@@ -23,12 +23,12 @@
   "homepage": "https://github.com/AitorGuerrero/simple-aws-dynamo#readme",
   "devDependencies": {
     "@types/chai": "^4.1.7",
-    "@types/mocha": "^5.2.5",
-    "@types/node": "^10.12.18",
-    "aws-sdk": "^2.378.0",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^10.14.1",
+    "aws-sdk": "^2.422.0",
     "chai": "^4.2.0",
-    "mocha": "^5.2.0",
-    "tslint": "^5.11.0",
-    "typescript": "^3.2.2"
+    "mocha": "^6.0.2",
+    "tslint": "^5.14.0",
+    "typescript": "^3.3.3333"
   }
 }
