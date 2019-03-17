@@ -116,8 +116,5 @@ function filterRepeatedKeys(arrArg: DocumentClient.Key[]) {
 }
 
 function sameKey(key1: DocumentClient.Key, key2: DocumentClient.Key) {
-	const key1Keys = Object.keys(key1);
-
-	return key1Keys.length === Object.keys(key2).length
-		&& key1Keys.every((k) => key2[k] === key1[k]);
+	return Object.keys(key1).every((k) => key2[k] === key1[k]);
 }
