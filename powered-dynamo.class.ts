@@ -42,17 +42,18 @@ export default class PoweredDynamo implements IPoweredDynamo {
 	}
 
 	public async getList(tableName: string, keys: DocumentClient.Key[]) {
-		const input: DocumentClient.BatchGetItemInput = {
-			RequestItems: {
-				[tableName]: {Keys: uniqueKeys(keys)},
-			},
-		};
-		const response = await new Promise<DocumentClient.BatchGetItemOutput>(
-			(rs, rj) => this.documentClient.batchGet(input, (err, res) => err ? rj(err) : rs(res)),
-		);
+		const uniqueKeys: DocumentClient.Key = filterRepeatedKeys(keys);
 		const result = new Map<DocumentClient.Key, DocumentClient.AttributeMap>();
-		for (const item of response.Responses[tableName]) {
-			result.set(keys.find((k) => sameKey(k, item)), item);
+
+		for (let i = 0; i < uniqueKeys.length; i += 10) {
+			const keysBatch: DocumentClient.Key[] = uniqueKeys.slice(i, i + 10);
+			const input: DocumentClient.BatchGetItemInput = {
+				RequestItems: {[tableName]: {Keys: keysBatch}},
+			};
+			const response = await this.asyncBatchGet(input);
+			for (const item of response.Responses[tableName]) {
+				result.set(keysBatch.find((k) => sameKey(k, item)), item);
+			}
 		}
 
 		return result;
@@ -90,9 +91,15 @@ export default class PoweredDynamo implements IPoweredDynamo {
 	public async transactWrite(input: DocumentClient.TransactWriteItemsInput) {
 		await new Promise((rs, rj) => this.documentClient.transactWrite(input, (err, output) => err ? rj(err) : rs(output)));
 	}
+
+	private asyncBatchGet(input: DynamoDB.DocumentClient.BatchGetItemInput) {
+		return new Promise<DocumentClient.BatchGetItemOutput>(
+			(rs, rj) => this.documentClient.batchGet(input, (err, res) => err ? rj(err) : rs(res)),
+		);
+	}
 }
 
-function uniqueKeys(arrArg: DocumentClient.Key[]) {
+function filterRepeatedKeys(arrArg: DocumentClient.Key[]) {
 	return arrArg.reduce(
 		(output, key) => output.some(
 			(k2: DocumentClient.Key) => sameKey(key, k2),
@@ -102,5 +109,8 @@ function uniqueKeys(arrArg: DocumentClient.Key[]) {
 }
 
 function sameKey(key1: DocumentClient.Key, key2: DocumentClient.Key) {
-	return Object.keys(key1).every((k) => key2[k] === key1[k]);
+	const key1Keys = Object.keys(key1);
+
+	return key1Keys.length === Object.keys(key2).length
+		&& key1Keys.every((k) => key2[k] === key1[k]);
 }
