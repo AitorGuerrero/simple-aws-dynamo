@@ -40,21 +40,28 @@ export default class PoweredDynamo implements IPoweredDynamo {
 			(rs, rj) => this.documentClient.get(input, (err, output) => err ? rj(err) : rs(output)),
 		);
 	}
-
 	public async getList(tableName: string, keys: DocumentClient.Key[]) {
 		const uniqueKeys: DocumentClient.Key = filterRepeatedKeys(keys);
 		const result = new Map<DocumentClient.Key, DocumentClient.AttributeMap>();
-
+		const batchProcesses: Array<Promise<void>> = [];
 		for (let i = 0; i < uniqueKeys.length; i += 10) {
-			const keysBatch: DocumentClient.Key[] = uniqueKeys.slice(i, i + 10);
-			const input: DocumentClient.BatchGetItemInput = {
-				RequestItems: {[tableName]: {Keys: keysBatch}},
-			};
-			const response = await this.asyncBatchGet(input);
-			for (const item of response.Responses[tableName]) {
-				result.set(keysBatch.find((k) => sameKey(k, item)), item);
-			}
+			batchProcesses.push(new Promise(async (rs, rj) => {
+				try {
+					const keysBatch: DocumentClient.Key[] = uniqueKeys.slice(i, i + 10);
+					const input: DocumentClient.BatchGetItemInput = {
+						RequestItems: {[tableName]: {Keys: keysBatch}},
+					};
+					const response = await this.asyncBatchGet(input);
+					for (const item of response.Responses[tableName]) {
+						result.set(keysBatch.find((k) => sameKey(k, item)), item);
+					}
+					rs();
+				} catch (err) {
+					rj(err);
+				}
+			}));
 		}
+		await Promise.all(batchProcesses);
 
 		return result;
 	}
