@@ -8,7 +8,6 @@ import IPoweredDynamo from "./powered-dynamo.interface";
 
 const maxBatchWriteElems = 10;
 const internalServerErrorCode = "InternalServerError";
-const retryWaitTimes = [200, 400];
 
 export default class PoweredDynamo implements IPoweredDynamo {
 
@@ -37,6 +36,8 @@ export default class PoweredDynamo implements IPoweredDynamo {
 	private static errorIsInternalServerError(error: unknown) {
 		return error instanceof Error && error.name === internalServerErrorCode;
 	}
+
+	public readonly retryWaitTimes = [100, 500, 1000];
 
 	constructor(
 		private documentClient: DocumentClient,
@@ -109,33 +110,19 @@ export default class PoweredDynamo implements IPoweredDynamo {
 		await this.retryInternalServerError(() => this.asyncTransactWrite(input));
 	}
 
-	private async retryInternalServerError<O>(execution: () => Promise<O>) {
+	private async retryInternalServerError<O>(execution: () => Promise<O>, tryCount = 0) {
 		try {
 			return await execution();
-		} catch (firstTryError) {
-			if (PoweredDynamo.errorIsInternalServerError(firstTryError)) {
-				await new Promise((rs) => setTimeout(rs, retryWaitTimes[0]));
-				try {
-					return await execution();
-				} catch (secondTryError) {
-					if (PoweredDynamo.errorIsInternalServerError(secondTryError)) {
-						await new Promise((rs) => setTimeout(rs, retryWaitTimes[1]));
-						try {
-							return await execution();
-						} catch (err) {
-							if (PoweredDynamo.errorIsInternalServerError(err)) {
-								throw new MaxRetriesReached();
-							}
-
-							throw err;
-						}
-					}
-
-					throw secondTryError;
+		} catch (error) {
+			if (PoweredDynamo.errorIsInternalServerError(error)) {
+				if (this.retryWaitTimes[tryCount] === undefined) {
+					throw new MaxRetriesReached();
 				}
+				await new Promise((rs) => setTimeout(rs, this.retryWaitTimes[tryCount]));
+				await this.retryInternalServerError(execution, tryCount + 1);
 			}
 
-			throw firstTryError;
+			throw error;
 		}
 	}
 
