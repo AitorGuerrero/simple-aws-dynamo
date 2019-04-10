@@ -3,9 +3,12 @@ import QuerySearchGenerator from "./query-generator.class";
 import ScanSearchGenerator from "./scan-generator.class";
 
 import DocumentClient = DynamoDB.DocumentClient;
+import MaxRetriesReached from "./error.max-retries-reached.class";
 import IPoweredDynamo from "./powered-dynamo.interface";
 
 const maxBatchWriteElems = 10;
+const internalServerErrorCode = "InternalServerError";
+const retryWaitTimes = [200, 400];
 
 export default class PoweredDynamo implements IPoweredDynamo {
 
@@ -29,6 +32,10 @@ export default class PoweredDynamo implements IPoweredDynamo {
 		}
 
 		return batches;
+	}
+
+	private static errorIsInternalServerError(error: unknown) {
+		return error instanceof Error && error.name === internalServerErrorCode;
 	}
 
 	constructor(
@@ -75,33 +82,77 @@ export default class PoweredDynamo implements IPoweredDynamo {
 	}
 
 	public put(input: DocumentClient.PutItemInput) {
-		return new Promise((rs, rj) => this.documentClient.put(input, (err, output) => err ? rj(err) : rs(output)));
+		return this.retryInternalServerError(
+			() => new Promise((rs, rj) => this.documentClient.put(input, (err, output) => err ? rj(err) : rs(output))),
+		);
 	}
 
 	public update(input: DocumentClient.UpdateItemInput) {
-		return new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output)));
+		return this.retryInternalServerError(
+			() => new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output))),
+		);
 	}
 
 	public delete(input: DocumentClient.DeleteItemInput) {
-		return new Promise((rs, rj) => this.documentClient.delete(input, (err, output) => err ? rj(err) : rs(output)));
+		return this.retryInternalServerError(
+			() => new Promise((rs, rj) => this.documentClient.delete(input, (err, output) => err ? rj(err) : rs(output))),
+		);
 	}
 
 	public async batchWrite(request: DocumentClient.BatchWriteItemInput) {
 		for (const batch of PoweredDynamo.splitBatchWriteRequestsInChunks(request)) {
-			await new Promise((rs, rj) => this.documentClient.batchWrite(
-				Object.assign(request, {RequestItems: batch}),
-				(err, output) => err ? rj(err) : rs(output)),
-			);
+			await this.retryInternalServerError(() => this.asyncBatchWrite(Object.assign(request, {RequestItems: batch})));
 		}
 	}
 
 	public async transactWrite(input: DocumentClient.TransactWriteItemsInput) {
-		await new Promise((rs, rj) => this.documentClient.transactWrite(input, (err, output) => err ? rj(err) : rs(output)));
+		await this.retryInternalServerError(() => this.asyncTransactWrite(input));
+	}
+
+	private async retryInternalServerError<O>(execution: () => Promise<O>) {
+		try {
+			return await execution();
+		} catch (firstTryError) {
+			if (PoweredDynamo.errorIsInternalServerError(firstTryError)) {
+				await new Promise((rs) => setTimeout(rs, retryWaitTimes[0]));
+				try {
+					return await execution();
+				} catch (secondTryError) {
+					if (PoweredDynamo.errorIsInternalServerError(secondTryError)) {
+						await new Promise((rs) => setTimeout(rs, retryWaitTimes[1]));
+						try {
+							return await execution();
+						} catch (err) {
+							if (PoweredDynamo.errorIsInternalServerError(err)) {
+								throw new MaxRetriesReached();
+							}
+
+							throw err;
+						}
+					}
+
+					throw secondTryError;
+				}
+			}
+
+			throw firstTryError;
+		}
 	}
 
 	private asyncBatchGet(input: DynamoDB.DocumentClient.BatchGetItemInput) {
 		return new Promise<DocumentClient.BatchGetItemOutput>(
 			(rs, rj) => this.documentClient.batchGet(input, (err, res) => err ? rj(err) : rs(res)),
+		);
+	}
+
+	private  async asyncTransactWrite(input: DocumentClient.TransactWriteItemsInput) {
+		await new Promise((rs, rj) => this.documentClient.transactWrite(input, (err, output) => err ? rj(err) : rs(output)));
+	}
+
+	private async asyncBatchWrite(input: DocumentClient.BatchWriteItemInput) {
+		await new Promise((rs, rj) => this.documentClient.batchWrite(
+			input,
+			(err, output) => err ? rj(err) : rs(output)),
 		);
 	}
 }
