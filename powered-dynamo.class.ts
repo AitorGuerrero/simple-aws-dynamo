@@ -1,13 +1,17 @@
 import {DynamoDB} from "aws-sdk";
+import DocumentClient = DynamoDB.DocumentClient;
+import {EventEmitter} from "events";
+import MaxRetriesReached from "./error.max-retries-reached.class";
+import IPoweredDynamo from "./powered-dynamo.interface";
 import QuerySearchGenerator from "./query-generator.class";
 import ScanSearchGenerator from "./scan-generator.class";
 
-import DocumentClient = DynamoDB.DocumentClient;
-import MaxRetriesReached from "./error.max-retries-reached.class";
-import IPoweredDynamo from "./powered-dynamo.interface";
-
 const maxBatchWriteElems = 10;
-const internalServerErrorCode = "InternalServerError";
+const retryableErrors = ["InternalServerError", "TransactionCanceledException"];
+
+enum EventType {
+	retryableError = "retryableError",
+}
 
 export default class PoweredDynamo implements IPoweredDynamo {
 
@@ -33,14 +37,15 @@ export default class PoweredDynamo implements IPoweredDynamo {
 		return batches;
 	}
 
-	private static errorIsInternalServerError(error: unknown) {
-		return error instanceof Error && error.name === internalServerErrorCode;
+	private static errorIsRetryable(error: unknown) {
+		return error instanceof Error && retryableErrors.indexOf(error.name) !== -1;
 	}
 
 	public readonly retryWaitTimes = [100, 500, 1000];
 
 	constructor(
 		private documentClient: DocumentClient,
+		public eventEmitter = new EventEmitter(),
 	) {}
 
 	public get(input: DocumentClient.GetItemInput) {
@@ -114,7 +119,8 @@ export default class PoweredDynamo implements IPoweredDynamo {
 		try {
 			return await execution();
 		} catch (error) {
-			if (PoweredDynamo.errorIsInternalServerError(error)) {
+			if (PoweredDynamo.errorIsRetryable(error)) {
+				this.eventEmitter.emit(EventType.retryableError, error);
 				if (this.retryWaitTimes[tryCount] === undefined) {
 					throw new MaxRetriesReached();
 				}
