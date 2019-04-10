@@ -7,7 +7,6 @@ import QuerySearchGenerator from "./query-generator.class";
 import ScanSearchGenerator from "./scan-generator.class";
 
 const maxBatchWriteElems = 10;
-const retryableErrors = ["InternalServerError", "TransactionCanceledException"];
 
 enum EventType {
 	retryableError = "retryableError",
@@ -37,8 +36,14 @@ export default class PoweredDynamo implements IPoweredDynamo {
 		return batches;
 	}
 
-	private static errorIsRetryable(error: unknown) {
-		return error instanceof Error && retryableErrors.indexOf(error.name) !== -1;
+	private static isInternalServerError(error: Error) {
+		return error.name === "InternalServerError";
+	}
+
+	private static isRetryableTransactionError(err: Error) {
+		return err.name === "TransactionCanceledException"
+			&& /ConditionalCheckFailed/.test(err.message) === false
+			&& /TransactionConflict/.test(err.message);
 	}
 
 	public readonly retryWaitTimes = [100, 500, 1000];
@@ -112,20 +117,36 @@ export default class PoweredDynamo implements IPoweredDynamo {
 	}
 
 	public async transactWrite(input: DocumentClient.TransactWriteItemsInput) {
-		await this.retryInternalServerError(() => this.asyncTransactWrite(input));
+		await this.retryTransactionCancelledServerError(() =>
+			this.retryInternalServerError(() => this.asyncTransactWrite(input)),
+		);
 	}
 
-	private async retryInternalServerError<O>(execution: () => Promise<O>, tryCount = 0) {
+	private async retryTransactionCancelledServerError<O>(execution: () => Promise<O>) {
+		return this.retryError(
+			PoweredDynamo.isRetryableTransactionError,
+			execution,
+		);
+	}
+
+	private async retryInternalServerError<O>(execution: () => Promise<O>) {
+		return this.retryError(
+			PoweredDynamo.isInternalServerError,
+			execution,
+		);
+	}
+
+	private async retryError<O>(isRetryable: (err: Error) => boolean, execution: () => Promise<O>, tryCount = 0) {
 		try {
 			return await execution();
 		} catch (error) {
-			if (PoweredDynamo.errorIsRetryable(error)) {
+			if (isRetryable(error)) {
 				this.eventEmitter.emit(EventType.retryableError, error);
 				if (this.retryWaitTimes[tryCount] === undefined) {
 					throw new MaxRetriesReached();
 				}
 				await new Promise((rs) => setTimeout(rs, this.retryWaitTimes[tryCount]));
-				await this.retryInternalServerError(execution, tryCount + 1);
+				await this.retryError(isRetryable, execution, tryCount + 1);
 			}
 
 			throw error;
