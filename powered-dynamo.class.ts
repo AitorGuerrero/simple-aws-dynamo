@@ -3,13 +3,32 @@ import DocumentClient = DynamoDB.DocumentClient;
 import {EventEmitter} from "events";
 import MaxRetriesReached from "./error.max-retries-reached.class";
 import IPoweredDynamo from "./powered-dynamo.interface";
-import QuerySearchGenerator from "./query-generator.class";
-import ScanSearchGenerator from "./scan-generator.class";
+import QuerySearchGenerator, {IQueryDocumentClient} from "./query-generator.class";
+import ScanSearchGenerator, {IScanDocumentClient} from "./scan-generator.class";
 
 const maxBatchWriteElems = 10;
 
 enum EventType {
 	retryableError = "retryableError",
+}
+
+export interface IDocumentClient extends IScanDocumentClient, IQueryDocumentClient {
+	get(i: DocumentClient.GetItemInput, cb: (err: Error, data: DocumentClient.GetItemOutput) => unknown): unknown;
+	batchGet(
+		i: DocumentClient.BatchGetItemInput,
+		cb: (err: Error, data: DocumentClient.BatchGetItemOutput) => unknown,
+	): unknown;
+	put(i: DocumentClient.PutItemInput, cb: (err: Error, data: DocumentClient.PutItemOutput) => unknown): unknown;
+	update(i: DocumentClient.UpdateItemInput, cb: (err: Error, data: DocumentClient.UpdateItemOutput) => unknown): unknown;
+	delete(i: DocumentClient.DeleteItemInput, cb: (err: Error, data: DocumentClient.DeleteItemOutput) => unknown): unknown;
+	batchWrite(
+		i: DocumentClient.BatchWriteItemInput,
+		cb: (err: Error, data: DocumentClient.BatchWriteItemOutput) => unknown,
+	): unknown;
+	transactWrite(
+		i: DocumentClient.TransactWriteItemsInput,
+		cb: (err: Error, data: DocumentClient.TransactWriteItemsOutput) => unknown,
+	): unknown;
 }
 
 export default class PoweredDynamo implements IPoweredDynamo {
@@ -46,10 +65,10 @@ export default class PoweredDynamo implements IPoweredDynamo {
 			&& /TransactionConflict/.test(err.message);
 	}
 
-	public readonly retryWaitTimes = [100, 500, 1000];
+	public retryWaitTimes: number[] = [100, 500, 1000];
 
 	constructor(
-		private documentClient: DocumentClient,
+		private documentClient: IDocumentClient,
 		public eventEmitter = new EventEmitter(),
 	) {}
 
@@ -136,7 +155,11 @@ export default class PoweredDynamo implements IPoweredDynamo {
 		);
 	}
 
-	private async retryError<O>(isRetryable: (err: Error) => boolean, execution: () => Promise<O>, tryCount = 0) {
+	private async retryError<O>(
+		isRetryable: (err: Error) => boolean,
+		execution: () => Promise<O>,
+		tryCount = 0,
+	): Promise<O> {
 		try {
 			return await execution();
 		} catch (error) {
@@ -146,7 +169,7 @@ export default class PoweredDynamo implements IPoweredDynamo {
 					throw new MaxRetriesReached();
 				}
 				await new Promise((rs) => setTimeout(rs, this.retryWaitTimes[tryCount]));
-				await this.retryError(isRetryable, execution, tryCount + 1);
+				return await this.retryError(isRetryable, execution, tryCount + 1);
 			}
 
 			throw error;

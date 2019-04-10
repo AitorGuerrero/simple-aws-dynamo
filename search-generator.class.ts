@@ -3,7 +3,7 @@ import IGenerator from "./generator.interface";
 
 import DocumentClient = DynamoDB.DocumentClient;
 
-interface IInput {
+export interface IInput {
 	ExclusiveStartKey?: DocumentClient.Key;
 }
 
@@ -19,8 +19,7 @@ export default abstract class SearchGenerator<Input> implements IGenerator {
 	private sourceIsEmpty = false;
 	private lastEvaluatedKey: DocumentClient.Key;
 
-	constructor(
-		protected documentClient: DocumentClient,
+	protected constructor(
 		protected input: Input & IInput,
 	) {}
 
