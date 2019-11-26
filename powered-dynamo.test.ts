@@ -64,12 +64,12 @@ describe("PoweredDynamoClass", () => {
 	});
 
 	describe("When requesting scanned data", () => {
-		describe("and scan returns 2 batches and 3 elements total", () => {
+		describe("and scan returns 2 batches and 5 elements total", () => {
 			const firstElementId = "firstElementId";
 			const thirdElementId = "thirdElementId";
 			beforeEach(() => fakeDocumentClient.scanQueueBatches = [
-				{Items: [{id: firstElementId}, {id: "itemB"}], LastEvaluatedKey: {}},
-				{Items: [{id: thirdElementId}], LastEvaluatedKey: {}},
+				{Items: [{id: firstElementId}, {id: "itemA"}], LastEvaluatedKey: {}},
+				{Items: [{id: thirdElementId}, {id: "itemB"}, {id: "itemC"}], LastEvaluatedKey: {}},
 			]);
 			describe("and asking for the first result", () => {
 				it("should return first element", async () => {
@@ -84,6 +84,14 @@ describe("PoweredDynamoClass", () => {
 					await result.next();
 					const element = await result.next();
 					expect(element.id).to.be.equal(thirdElementId);
+				});
+			});
+			describe("and asking for 3 items slice", () => {
+				it("should return 3 first items", async () => {
+					const result = await poweredDynamo.scan({TableName: tableName}).slice(3);
+					expect(result.length).to.be.equal(3);
+					expect(result[0].id).to.be.equal(firstElementId);
+					expect(result[2].id).to.be.equal(thirdElementId);
 				});
 			});
 		});

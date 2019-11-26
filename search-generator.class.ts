@@ -63,6 +63,16 @@ export default abstract class SearchGenerator<Input> implements IGenerator {
 		return result;
 	}
 
+	public async slice(amount: number) {
+		let e: DocumentClient.AttributeMap;
+		const result: DocumentClient.AttributeMap[] = [];
+		while ((e = await this.next()) && result.length < amount) {
+			result.push(e);
+		}
+
+		return result;
+	}
+
 	protected abstract asyncSearch(input: Input): Promise<IOutput>;
 
 	private async getNextBlock() {
