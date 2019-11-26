@@ -34,6 +34,7 @@ export class TransactionConflict extends Error {
 
 export default class FakeDocumentClient implements IDocumentClient {
 
+    public scanQueueBatches: DynamoDB.DocumentClient.ScanOutput[] = [];
     private pendingFails: {[functionName: string]: Error[]} = {
         put: [],
         transactWrite: [],
@@ -63,7 +64,7 @@ export default class FakeDocumentClient implements IDocumentClient {
         cb(error, {});
     }
     public scan(i: DocumentClient.ScanInput, cb: (err: Error, data: DocumentClient.ScanOutput) => unknown) {
-        throw new Error("Method not implemented.");
+        cb(null, this.scanQueueBatches.shift());
     }
     public query(i: DocumentClient.QueryInput, cb: (err: Error, data: DocumentClient.QueryOutput) => unknown) {
         throw new Error("Method not implemented.");

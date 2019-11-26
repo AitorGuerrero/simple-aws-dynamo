@@ -62,4 +62,30 @@ describe("PoweredDynamoClass", () => {
 			));
 		});
 	});
+
+	describe("When requesting scanned data", () => {
+		describe("and scan returns 2 batches and 3 elements total", () => {
+			const firstElementId = "firstElementId";
+			const thirdElementId = "thirdElementId";
+			beforeEach(() => fakeDocumentClient.scanQueueBatches = [
+				{Items: [{id: firstElementId}, {id: "itemB"}], LastEvaluatedKey: {}},
+				{Items: [{id: thirdElementId}], LastEvaluatedKey: {}},
+			]);
+			describe("and asking for the first result", () => {
+				it("should return first element", async () => {
+					const element = await poweredDynamo.scan({TableName: tableName}).next();
+					expect(element.id).to.be.equal(firstElementId);
+				});
+			});
+			describe("and asking for the third result", () => {
+				it("should return third element", async () => {
+					const result = await poweredDynamo.scan({TableName: tableName});
+					await result.next();
+					await result.next();
+					const element = await result.next();
+					expect(element.id).to.be.equal(thirdElementId);
+				});
+			});
+		});
+	});
 });
