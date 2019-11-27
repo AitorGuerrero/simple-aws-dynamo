@@ -6,4 +6,5 @@ export default interface IGenerator {
 	next(): Promise<DocumentClient.AttributeMap>;
 	count(): Promise<number>;
 	toArray(): Promise<DocumentClient.AttributeMap[]>;
+	slice(amount: number): Promise<DocumentClient.AttributeMap[]>;
 }
