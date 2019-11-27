@@ -1,5 +1,4 @@
 /* tslint:disable */
-import {IDocumentClient} from "./powered-dynamo.class";
 import {DynamoDB} from 'aws-sdk';
 
 import DocumentClient = DynamoDB.DocumentClient;
@@ -32,7 +31,7 @@ export class TransactionConflict extends Error {
     }
 }
 
-export default class FakeDocumentClient implements IDocumentClient {
+export default class FakeDocumentClient {
 
     public scanQueueBatches: DynamoDB.DocumentClient.ScanOutput[] = [];
     private pendingFails: {[functionName: string]: Error[]} = {
@@ -40,24 +39,9 @@ export default class FakeDocumentClient implements IDocumentClient {
         transactWrite: [],
     };
 
-    public get(i: DocumentClient.GetItemInput, cb: (err: Error, data: DocumentClient.GetItemOutput) => unknown) {
-		throw new Error("Method not implemented.");
-	}
-    public batchGet(i: DocumentClient.BatchGetItemInput, cb: (err: Error, data: DocumentClient.BatchGetItemOutput) => unknown) {
-        throw new Error("Method not implemented.");
-    }
     public put(i: DocumentClient.PutItemInput, cb: (err: Error, data: DocumentClient.PutItemOutput) => unknown) {
         const error = this.pendingFails.put.pop() || null;
         cb(error, {});
-    }
-    public update(i: DocumentClient.UpdateItemInput, cb: (err: Error, data: DocumentClient.UpdateItemOutput) => unknown) {
-        throw new Error("Method not implemented.");
-    }
-    public delete(i: DocumentClient.DeleteItemInput, cb: (err: Error, data: DocumentClient.DeleteItemOutput) => unknown) {
-        throw new Error("Method not implemented.");
-    }
-    public batchWrite(i: DocumentClient.BatchWriteItemInput, cb: (err: Error, data: DocumentClient.BatchWriteItemOutput) => unknown) {
-        throw new Error("Method not implemented.");
     }
     public transactWrite(i: DocumentClient.TransactWriteItemsInput, cb: (err: Error, data: DocumentClient.TransactWriteItemsOutput) => unknown) {
         const error = this.pendingFails.transactWrite.pop() || null;
@@ -66,10 +50,6 @@ export default class FakeDocumentClient implements IDocumentClient {
     public scan(i: DocumentClient.ScanInput, cb: (err: Error, data: DocumentClient.ScanOutput) => unknown) {
         cb(null, this.scanQueueBatches.shift());
     }
-    public query(i: DocumentClient.QueryInput, cb: (err: Error, data: DocumentClient.QueryOutput) => unknown) {
-        throw new Error("Method not implemented.");
-    }
-
     public failOn(functionName: string, error: Error) {
         this.pendingFails[functionName].push(error);
     }

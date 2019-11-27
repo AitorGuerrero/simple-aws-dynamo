@@ -1,10 +1,10 @@
-#IDE
+# IDE
 .idea
 
-#DEPENDENCIES
+# Dependencies
 node_modules
 
-#GENERATED
+# Generated
 *.js
 *.d.ts
 .nyc_output

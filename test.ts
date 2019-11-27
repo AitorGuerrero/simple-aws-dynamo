@@ -17,7 +17,7 @@ describe("PoweredDynamoClass", () => {
 
 	beforeEach(() => {
 		fakeDocumentClient = new FakeDocumentClient();
-		poweredDynamo = new PoweredDynamo(fakeDocumentClient);
+		poweredDynamo = new PoweredDynamo(fakeDocumentClient as any);
 		poweredDynamo.retryWaitTimes = [1, 1, 1];
 	});
 
@@ -73,16 +73,16 @@ describe("PoweredDynamoClass", () => {
 			]);
 			describe("and asking for the first result", () => {
 				it("should return first element", async () => {
-					const element = await poweredDynamo.scan({TableName: tableName}).next();
+					const element = await poweredDynamo.scan({TableName: tableName}).next().value;
 					expect(element.id).to.be.equal(firstElementId);
 				});
 			});
 			describe("and asking for the third result", () => {
 				it("should return third element", async () => {
 					const result = await poweredDynamo.scan({TableName: tableName});
-					await result.next();
-					await result.next();
-					const element = await result.next();
+					await result.next().value;
+					await result.next().value;
+					const element = await result.next().value;
 					expect(element.id).to.be.equal(thirdElementId);
 				});
 			});

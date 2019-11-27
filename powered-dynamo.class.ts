@@ -1,34 +1,14 @@
 import {DynamoDB} from "aws-sdk";
-import DocumentClient = DynamoDB.DocumentClient;
+import DynamoIterator from "dynamo-iterator";
 import {EventEmitter} from "events";
 import MaxRetriesReached from "./error.max-retries-reached.class";
 import IPoweredDynamo from "./powered-dynamo.interface";
-import QuerySearchGenerator, {IQueryDocumentClient} from "./query-generator.class";
-import ScanSearchGenerator, {IScanDocumentClient} from "./scan-generator.class";
+import DocumentClient = DynamoDB.DocumentClient;
 
 const maxBatchWriteElems = 10;
 
 enum EventType {
 	retryableError = "retryableError",
-}
-
-export interface IDocumentClient extends IScanDocumentClient, IQueryDocumentClient {
-	get(i: DocumentClient.GetItemInput, cb: (err: Error, data: DocumentClient.GetItemOutput) => unknown): unknown;
-	batchGet(
-		i: DocumentClient.BatchGetItemInput,
-		cb: (err: Error, data: DocumentClient.BatchGetItemOutput) => unknown,
-	): unknown;
-	put(i: DocumentClient.PutItemInput, cb: (err: Error, data: DocumentClient.PutItemOutput) => unknown): unknown;
-	update(i: DocumentClient.UpdateItemInput, cb: (err: Error, data: DocumentClient.UpdateItemOutput) => unknown): unknown;
-	delete(i: DocumentClient.DeleteItemInput, cb: (err: Error, data: DocumentClient.DeleteItemOutput) => unknown): unknown;
-	batchWrite(
-		i: DocumentClient.BatchWriteItemInput,
-		cb: (err: Error, data: DocumentClient.BatchWriteItemOutput) => unknown,
-	): unknown;
-	transactWrite(
-		i: DocumentClient.TransactWriteItemsInput,
-		cb: (err: Error, data: DocumentClient.TransactWriteItemsOutput) => unknown,
-	): unknown;
 }
 
 export default class PoweredDynamo implements IPoweredDynamo {
@@ -66,11 +46,14 @@ export default class PoweredDynamo implements IPoweredDynamo {
 	}
 
 	public retryWaitTimes: number[] = [100, 500, 1000];
+	private iterator: DynamoIterator;
 
 	constructor(
-		private documentClient: IDocumentClient,
+		private documentClient: DocumentClient,
 		public eventEmitter = new EventEmitter(),
-	) {}
+	) {
+		this.iterator = new DynamoIterator(documentClient);
+	}
 
 	public get(input: DocumentClient.GetItemInput) {
 		return new Promise<DocumentClient.GetItemOutput>(
@@ -104,11 +87,11 @@ export default class PoweredDynamo implements IPoweredDynamo {
 	}
 
 	public scan(input: DocumentClient.ScanInput) {
-		return new ScanSearchGenerator(this.documentClient, input);
+		return this.iterator.scan(input);
 	}
 
 	public query(input: DocumentClient.QueryInput) {
-		return new QuerySearchGenerator(this.documentClient, input);
+		return this.iterator.query(input);
 	}
 
 	public put(input: DocumentClient.PutItemInput) {
