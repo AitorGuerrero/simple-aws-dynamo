@@ -6,7 +6,7 @@ import FakeDocumentClient, {
 	TransactionCanceledException,
 	TransactionConflict,
 } from "./fake.document-client.class";
-import PoweredDynamo from "./powered-dynamo.class";
+import PoweredDynamo from "./index";
 
 describe("PoweredDynamoClass", () => {
 
