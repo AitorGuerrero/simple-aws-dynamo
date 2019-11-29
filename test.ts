@@ -73,7 +73,7 @@ describe("PoweredDynamoClass", () => {
 			]);
 			describe("and asking for the first result", () => {
 				it("should return first element", async () => {
-					const element = await poweredDynamo.scan({TableName: tableName}).next().value;
+					const element = await (await poweredDynamo.scan({TableName: tableName})).next().value;
 					expect(element.id).to.be.equal(firstElementId);
 				});
 			});
@@ -88,7 +88,7 @@ describe("PoweredDynamoClass", () => {
 			});
 			describe("and asking for 3 items slice", () => {
 				it("should return 3 first items", async () => {
-					const result = await poweredDynamo.scan({TableName: tableName}).slice(3);
+					const result = await (await poweredDynamo.scan({TableName: tableName})).slice(3);
 					expect(result.length).to.be.equal(3);
 					expect(result[0].id).to.be.equal(firstElementId);
 					expect(result[2].id).to.be.equal(thirdElementId);
