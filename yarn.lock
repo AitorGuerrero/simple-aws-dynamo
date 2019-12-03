@@ -406,9 +406,9 @@ diff@^4.0.1:
   integrity sha512-s2+XdvhPCOF01LRQBC8hf4vhbVmI2CGS5aZnxLJlT5FtdhPCDFq80q++zK2KlrVorVDdL5BOGZ/VfLrVtYNF+Q==
 
 dynamo-iterator@^1.0.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/dynamo-iterator/-/dynamo-iterator-1.1.0.tgz#61f1b7bf2622d54ab0042a51566c08691f0d3cb6"
-  integrity sha512-WOLkpHerX4fhMGtOCVQfgaKzKkmSBVG4l6tUNAKTHIc/d3RZ7CEtH3vbZbM9hjdbhegSQ/WT7jkmftTyOPtiDA==
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/dynamo-iterator/-/dynamo-iterator-1.1.1.tgz#0cdfe67653f5879965ecfc36572c92b8410d9507"
+  integrity sha512-2KHSTJDbCrnhFTtJCrxVLbJGV3Q2QK/tSyrM7DwL5LSFRsWJq/TOL42GbeIMsRJBdGO+YvOhSrFI2hhL5bPIIQ==
 
 emoji-regex@^7.0.1:
   version "7.0.3"
