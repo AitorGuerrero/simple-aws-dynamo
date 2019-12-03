@@ -39,7 +39,7 @@
     "typescript": "^3.5.2"
   },
   "dependencies": {
-    "dynamo-iterator": "^1.0.0"
+    "dynamo-iterator": "^1"
   },
   "husky": {
     "hooks": {

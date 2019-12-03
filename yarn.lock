@@ -405,7 +405,7 @@ diff@^4.0.1:
   resolved "https://registry.yarnpkg.com/diff/-/diff-4.0.1.tgz#0c667cb467ebbb5cea7f14f135cc2dba7780a8ff"
   integrity sha512-s2+XdvhPCOF01LRQBC8hf4vhbVmI2CGS5aZnxLJlT5FtdhPCDFq80q++zK2KlrVorVDdL5BOGZ/VfLrVtYNF+Q==
 
-dynamo-iterator@^1.0.0:
+dynamo-iterator@^1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/dynamo-iterator/-/dynamo-iterator-1.1.1.tgz#0cdfe67653f5879965ecfc36572c92b8410d9507"
   integrity sha512-2KHSTJDbCrnhFTtJCrxVLbJGV3Q2QK/tSyrM7DwL5LSFRsWJq/TOL42GbeIMsRJBdGO+YvOhSrFI2hhL5bPIIQ==
