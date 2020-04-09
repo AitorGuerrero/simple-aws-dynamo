@@ -35,6 +35,8 @@
     "husky": "^4.2.3",
     "mocha": "^7.1.1",
     "nyc": "^15.0.1",
+    "source-map-support": "^0.5.16",
+    "ts-node": "^8.8.2",
     "tslint": "^5.17.0",
     "typescript": "^3.5.2"
   },
@@ -45,10 +47,5 @@
     "hooks": {
       "pre-commit": "yarn && yarn run check:style && yarn run check:builds && yarn test"
     }
-  },
-  "nyc": {
-    "extends": "@istanbuljs/nyc-config-typescript",
-    "all": true,
-    "check-coverage": true
   }
 }
