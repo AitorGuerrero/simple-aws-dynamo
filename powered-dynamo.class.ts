@@ -5,7 +5,8 @@ import MaxRetriesReached from "./error.max-retries-reached.class";
 import IPoweredDynamo from "./powered-dynamo.interface";
 import DocumentClient = DynamoDB.DocumentClient;
 
-const maxBatchWriteElems = 10;
+const maxBatchWriteElems = 25;
+const maxBatchGetElems = 100;
 
 enum EventType {
 	retryableError = "retryableError",
@@ -64,10 +65,10 @@ export default class PoweredDynamo implements IPoweredDynamo {
 		const uniqueKeys: DocumentClient.Key = filterRepeatedKeys(keys);
 		const result = new Map<DocumentClient.Key, DocumentClient.AttributeMap>();
 		const batchProcesses: Array<Promise<void>> = [];
-		for (let i = 0; i < uniqueKeys.length; i += 10) {
+		for (let i = 0; i < uniqueKeys.length; i += maxBatchGetElems) {
 			batchProcesses.push(new Promise(async (rs, rj) => {
 				try {
-					const keysBatch: DocumentClient.Key[] = uniqueKeys.slice(i, i + 10);
+					const keysBatch: DocumentClient.Key[] = uniqueKeys.slice(i, i + maxBatchGetElems);
 					const input: DocumentClient.BatchGetItemInput = {
 						RequestItems: {[tableName]: {Keys: keysBatch}},
 					};
