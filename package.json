@@ -28,8 +28,8 @@
   "homepage": "https://github.com/AitorGuerrero/simple-aws-dynamo#readme",
   "devDependencies": {
     "@types/chai": "^4.1.7",
-    "@types/mocha": "^5.2.7",
-    "@types/node": "^12.0.8",
+    "@types/mocha": "^7.0.2",
+    "@types/node": "^13.13.5",
     "aws-sdk": "^2.478.0",
     "chai": "^4.2.0",
     "husky": "^4.2.3",
