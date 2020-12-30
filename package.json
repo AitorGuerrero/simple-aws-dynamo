@@ -1,6 +1,6 @@
 {
   "name": "powered-dynamo",
-  "version": "2.2.1",
+  "version": "3.0.0",
   "description": "Simple dynamo interface",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "tsc",
     "check:style": "tslint -p .",
     "check:builds": "tsc --noEmit",
-    "preversion": "yarn build",
+    "preversion": "yarn && yarn run check:style && yarn run check:builds && yarn test",
     "coverage": "nyc mocha"
   },
   "repository": {
