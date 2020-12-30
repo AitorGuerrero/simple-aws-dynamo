@@ -1,5 +1,6 @@
 import {DynamoDB} from "aws-sdk";
 import DynamoIterator from "dynamo-iterator";
+import ScanIterator from "dynamo-iterator/scan-iterator.class";
 import {EventEmitter} from "events";
 import MaxRetriesReached from "./error.max-retries-reached.class";
 import DocumentClient = DynamoDB.DocumentClient;
@@ -56,10 +57,9 @@ export default class PoweredDynamo {
 	}
 
 	public get(input: DocumentClient.GetItemInput) {
-		return new Promise<DocumentClient.GetItemOutput>(
-			(rs, rj) => this.documentClient.get(input, (err, output) => err ? rj(err) : rs(output)),
-		);
+		return this.documentClient.get(input).promise();
 	}
+
 	public async getList(tableName: string, keys: DocumentClient.Key[]) {
 		const uniqueKeys: DocumentClient.Key = filterRepeatedKeys(keys);
 		const result = new Map<DocumentClient.Key, DocumentClient.AttributeMap>();
@@ -86,7 +86,7 @@ export default class PoweredDynamo {
 		return result;
 	}
 
-	public scan(input: DocumentClient.ScanInput) {
+	public scan(input: DocumentClient.ScanInput): Promise<ScanIterator> {
 		return this.iterator.scan(input);
 	}
 
@@ -96,19 +96,19 @@ export default class PoweredDynamo {
 
 	public put(input: DocumentClient.PutItemInput) {
 		return this.retryInternalServerError(
-			() => new Promise((rs, rj) => this.documentClient.put(input, (err, output) => err ? rj(err) : rs(output))),
+			() => this.documentClient.put(input).promise(),
 		);
 	}
 
 	public update(input: DocumentClient.UpdateItemInput) {
 		return this.retryInternalServerError(
-			() => new Promise((rs, rj) => this.documentClient.update(input, (err, output) => err ? rj(err) : rs(output))),
+			() => this.documentClient.update(input).promise(),
 		);
 	}
 
 	public delete(input: DocumentClient.DeleteItemInput) {
 		return this.retryInternalServerError(
-			() => new Promise((rs, rj) => this.documentClient.delete(input, (err, output) => err ? rj(err) : rs(output))),
+			() => this.documentClient.delete(input).promise(),
 		);
 	}
 
@@ -160,20 +160,15 @@ export default class PoweredDynamo {
 	}
 
 	private asyncBatchGet(input: DynamoDB.DocumentClient.BatchGetItemInput) {
-		return new Promise<DocumentClient.BatchGetItemOutput>(
-			(rs, rj) => this.documentClient.batchGet(input, (err, res) => err ? rj(err) : rs(res)),
-		);
+		return this.documentClient.batchGet(input).promise();
 	}
 
-	private  async asyncTransactWrite(input: DocumentClient.TransactWriteItemsInput) {
-		await new Promise((rs, rj) => this.documentClient.transactWrite(input, (err, output) => err ? rj(err) : rs(output)));
+	private async asyncTransactWrite(input: DocumentClient.TransactWriteItemsInput) {
+		await this.documentClient.transactWrite(input).promise();
 	}
 
 	private async asyncBatchWrite(input: DocumentClient.BatchWriteItemInput) {
-		await new Promise((rs, rj) => this.documentClient.batchWrite(
-			input,
-			(err, output) => err ? rj(err) : rs(output)),
-		);
+		await this.documentClient.batchWrite(input).promise();
 	}
 }
 

@@ -39,17 +39,29 @@ export default class FakeDocumentClient {
         transactWrite: [],
     };
 
-    public put(i: DocumentClient.PutItemInput, cb: (err: Error, data: DocumentClient.PutItemOutput) => unknown) {
-        const error = this.pendingFails.put.pop() || null;
-        cb(error, {});
+    public put(i: DocumentClient.PutItemInput) {
+        return {
+            promise: async () => {
+                const error = this.pendingFails.put.pop() || null;
+                if (error) throw error;
+            },
+        };
     }
-    public transactWrite(i: DocumentClient.TransactWriteItemsInput, cb: (err: Error, data: DocumentClient.TransactWriteItemsOutput) => unknown) {
-        const error = this.pendingFails.transactWrite.pop() || null;
-        cb(error, {});
+    public transactWrite(i: DocumentClient.TransactWriteItemsInput) {
+        return {
+            promise: async () => {
+                const error = this.pendingFails.transactWrite.pop() || null;
+                if (error) throw error;
+            },
+        };
     }
-    public scan(i: DocumentClient.ScanInput, cb: (err: Error, data: DocumentClient.ScanOutput) => unknown) {
-        cb(null, this.scanQueueBatches.shift());
+
+    public scan(i: DocumentClient.ScanInput) {
+        return {
+            promise: async () => this.scanQueueBatches.shift(),
+        };
     }
+
     public failOn(functionName: string, error: Error) {
         this.pendingFails[functionName].push(error);
     }
